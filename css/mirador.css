@@ -1268,6 +1268,12 @@ ul.scroll-listing-thumbs li .thumb-label {
   padding: 0px 20px 10px 20px;
 }
 
+.mirador-viewer dl.metadata-listing:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 .mirador-viewer dl.metadata-listing a:hover {
   border-bottom: 1px dotted #005EBD;
 }
