@@ -140,8 +140,7 @@
    getMetadataRights: function(jsonLd) {
        return {
            'license':      jsonLd.license || '',
-           'attribution':  jsonLd.attribution || '',
-           'logo': jsonLd.logo || ''
+           'attribution':  jsonLd.attribution || ''
         };
    },
 
