@@ -23,6 +23,14 @@
 
     return json;
   };
+  
+  $.getJsonFromManifest = function(canvas) {
+    var json;
+    if (canvas.images[0].resource.service) {
+      json = canvas.images[0].resource.service;
+      return json;
+    }
+  };
 
 
   /* --------------------------------------------------------------------------
