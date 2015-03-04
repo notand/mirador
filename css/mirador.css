@@ -1436,6 +1436,13 @@ div.manifest-info a.mirador-btn.mirador-icon-toc {
   margin-left:5px;
 }
 
+.mirador-viewer .manifest-logo {
+  float: left;
+  margin: 4px 0 4px 5px;
+  height: 25px;
+  max-height: 25px;
+}
+
 .mirador-viewer a.mirador-icon-image-view:hover, .mirador-viewer a.mirador-icon-thumbs-view:hover, .mirador-viewer a.mirador-icon-empty-slot:hover, .mirador-viewer a.mirador-icon-new-object:hover, .mirador-viewer a.mirador-icon-toc:hover {
   color: black
 }

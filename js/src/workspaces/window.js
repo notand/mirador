@@ -107,7 +107,8 @@
       jQuery.each(this.focuses, function(index, value) {
          templateData[value] = true;
       });
-      templateData.title = manifest.label;      
+      templateData.title = manifest.label;
+      templateData.logo = manifest.logo;
       _this.element.prepend(_this.manifestInfoTemplate(templateData));
 
       //clear any existing objects
@@ -621,9 +622,10 @@
             '<a href="javascript:;" class="mirador-btn mirador-icon-metadata-view" title="Object Metadata"><i class="fa fa-info-circle fa-lg fa-fw"></i></a>',
           '{{/if}}',
         '</div>',
-          '<a href="javascript:;" class="mirador-btn mirador-icon-empty-slot" title="Remove object"><i class="fa fa-times fa-lg fa-fw"></i> </a>',
-          '<a href="javascript:;" class="mirador-btn mirador-icon-new-object" title="Replace object"><i class="fa fa-exchange fa-rotate-90 fa-lg fa-fw"></i> </a>',
-          '<a href="javascript:;" class="mirador-btn mirador-icon-toc selected" title="View/Hide Table of Contents"><i class="fa fa-caret-down fa-lg fa-fw"></i></a>',
+        '<img src="{{logo}}" class="manifest-logo" alt="">',
+        //'<a href="javascript:;" class="mirador-btn mirador-icon-empty-slot" title="Remove object"><i class="fa fa-times fa-lg fa-fw"></i> </a>',
+        //'<a href="javascript:;" class="mirador-btn mirador-icon-new-object" title="Replace object"><i class="fa fa-exchange fa-rotate-90 fa-lg fa-fw"></i> </a>',
+        '<a href="javascript:;" class="mirador-btn mirador-icon-toc selected" title="View/Hide Table of Contents"><i class="fa fa-caret-down fa-lg fa-fw"></i></a>',
         '<h3 class="window-manifest-title">{{title}}</h3>',
       '</div>'
     ].join(''))
