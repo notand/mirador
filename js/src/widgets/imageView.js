@@ -47,7 +47,7 @@
       this.elemAnno = jQuery('<div/>')
       .addClass(this.annoCls)
       .appendTo(this.element);
-      this.createOpenSeadragonInstance($.Iiif.getImageUrl(this.currentImg));
+      this.createOpenSeadragonInstance($.Iiif.getImageUrl(this.currentImg), this.currentImg);
       this.parent.updateFocusImages([this.imageID]); // DRY/Events refactor.
       // The hud controls are consistent 
       // throughout any updates to the osd canvas.
@@ -110,7 +110,7 @@
       }
     },
 
-    createOpenSeadragonInstance: function(imageUrl) {
+    createOpenSeadragonInstance: function(imageUrl, canvasUri) {
       var infoJsonUrl = $.Iiif.getUri(imageUrl) + '/info.json',
       uniqueID = $.genUUID(),
       osdID = 'mirador-osd-' + uniqueID,
@@ -118,8 +118,11 @@
       _this = this;
 
       this.element.find('.' + this.osdCls).remove();
+      
 
-      infoJson = $.getJsonFromUrl(infoJsonUrl, false);
+      //infoJson = $.getJsonFromUrl(infoJsonUrl, false);
+      // Temporary method to get info.json data from manifest 
+      infoJson = $.getJsonFromManifest(canvasUri);
 
       this.elemOsd =
         jQuery('<div/>')
