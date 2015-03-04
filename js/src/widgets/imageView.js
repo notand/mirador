@@ -186,7 +186,7 @@
           zoomLevel:        null
         };
         this.osd.close();
-        this.createOpenSeadragonInstance($.Iiif.getImageUrl(this.currentImg));
+        this.createOpenSeadragonInstance($.Iiif.getImageUrl(this.currentImg), this.currentImg);
         this.parent.updateFocusImages([imageID]);
         //by default, don't allow a user to be in edit annotation mode when changing pages
         if (this.hud.annoState.current === "annoOnEditOn") {
