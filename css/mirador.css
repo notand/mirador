@@ -3,6 +3,24 @@ a {
   text-decoration: inherit; /* no underline */
 }
 
+/* Dirty hacks for empty canvases
+----------------------------------------------------------------------------*/
+
+/* disable cursor and hover effects */
+.panel-thumbnail-view ul.panel-listing-thumbs li img[title="Lacune"]:hover,
+.mirador-viewer ul.listing-thumbs li img[title="Lacune"]:hover,
+.preview-image[src^="images"]:hover {
+  cursor:not-allowed;
+  box-shadow: none;
+  transform: none;
+  border: none;
+}
+
+/* remove link to BookView w/ css because config option "availableViews" has no effect :( */
+.window-manifest-navigation .dropdown li.book-option {
+  display: none;
+}
+
 /* jquery-ui-dialog theming/customisation (overrides to reset neutral defaults)
 ---------------------------------------------------------------------------- 
  */
@@ -1615,4 +1633,3 @@ div.manifest-info a.mirador-btn.mirador-icon-toc {
 .mce-edit-area iframe {
     height: 75px !important;
 }
-
