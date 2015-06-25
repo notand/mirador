@@ -43,7 +43,7 @@
       } else {
         thumbnailUrl = canvas.thumbnail['@id'];
       }
-    } else {
+    } else if (canvas.hasOwnProperty('images')) {
       // No thumbnail, use main image
       var resource = canvas.images[0].resource;
       service = resource['default'] ? resource['default'].service : resource.service;
@@ -51,6 +51,8 @@
         version = $.Iiif.getVersionFromContext(service['@context']);
       }          
       thumbnailUrl = $.Iiif.makeUriWithWidth(service['@id'], width, version);
+    } else { // this is a hack
+      thumbnailUrl = 'images/blank.jpg';
     }
     return thumbnailUrl;
   };

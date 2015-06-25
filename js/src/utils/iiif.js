@@ -4,8 +4,11 @@
   $.Iiif = {
 
     getImageUrl: function(image) {
-
-      if (!image.images[0].resource.service) {
+      
+      if (!image.images) { // this is a hack
+         id = "";
+         return id;
+      } else if (!image.images[0].resource.service) {
         id = image.images[0].resource['default'].service['@id'];
         id = id.replace(/\/$/, "");
         return id;

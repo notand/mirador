@@ -159,6 +159,20 @@
           }, 500));
 
         });
+      })
+      // this is a hack (create an empty mirador-osd div)
+      .fail(function() {
+        _this.elemOsd =
+          jQuery('<div/>')
+        .addClass(_this.osdCls)
+        .attr('id', osdID)
+        .appendTo(_this.element);
+        
+        _this.osd = $.OpenSeadragon({
+          'id':           osdID,
+          'tileSources':  infoJson,
+          'uniqueID' : uniqueID
+        });
       });
     },
 
