@@ -44,6 +44,32 @@
         };
       }
       this.currentImg = this.imagesList[this.currentImgIndex];
+
+      // Handle canvas metadata (temporary patch)
+      var tplData = {};
+      this.metadataTypes = {};
+      this.metadataTypes.canvasInfo = _this.getMetadataDetails(_this.currentImg);
+      //console.log(this.metadataTypes.canvasInfo);
+      
+      //vvvvv This is *not* how this should be done.
+      jQuery.each(this.metadataTypes, function(metadataKey, metadataValue) {
+        tplData[metadataKey] = [];
+        
+        jQuery.each(metadataValue, function(key, value) {
+          if (typeof value === 'object') {
+            value = _this.stringifyObject(value);
+          }
+
+          if (typeof value === 'string' && value !== '') {
+
+            tplData[metadataKey].push({
+              label: _this.extractLabelFromAttribute(key),
+              value: (metadataKey === 'links') ? value : _this.addLinksToUris(value)
+            });
+          }
+        });
+      });
+
       this.element = jQuery(this.template()).appendTo(this.appendTo);
       this.elemAnno = jQuery('<div/>')
       .addClass(this.annoCls)
@@ -82,7 +108,8 @@
         availableAnnotationStylePickers: this.state.getStateProperty('availableAnnotationStylePickers'),
         availableAnnotationTools: this.availableAnnotationTools,
         state: this.state,
-        eventEmitter: this.eventEmitter
+        eventEmitter: this.eventEmitter,
+        canvasInfoTplData: tplData
       });
 
       this.bindEvents();
@@ -95,9 +122,98 @@
       }
     },
 
+
+    getMetadataDetails: function(jsonLd) {
+      // TODO: This should not default to English
+      var mdList = {};
+
+      if (jsonLd.metadata) {
+        value = "";
+        label = "";
+        jQuery.each(jsonLd.metadata, function(index, item) {
+          label = $.JsonLd.getTextValue(item.label);
+          value = $.JsonLd.getTextValue(item.value);
+          mdList[label] = value;
+        });
+      }
+
+      return mdList;
+    },
+
+    extractLabelFromAttribute: function(attr) {
+      var label = attr;
+
+      label = label.replace(/^@/, '');
+      label = label.replace(/([A-Z])/g, ' $1');
+      label = label.replace(/\s{2,}/g, ' ');
+      label = label.replace(/\w\S*/g, function(txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+      });
+
+      return label;
+    },
+
+     addLinksToUris: function(text) {
+      // http://stackoverflow.com/questions/8188645/javascript-regex-to-match-a-url-in-a-field-of-text
+      var regexUrl = /(http|ftp|https):\/\/[\w\-]+(\.[\w\-]+)+([\w.,@?\^=%&amp;:\/~+#\-]*[\w@?\^=%&amp;\/~+#\-])?/gi,
+          textWithLinks = text,
+          matches;
+
+      if (typeof text === 'string' && textWithLinks.indexOf('<a ') == -1) {
+        matches = text.match(regexUrl);
+
+        if (matches) {
+          jQuery.each(matches, function(index, match) {
+            textWithLinks = textWithLinks.replace(match, '<a href="' + match + '" target="_blank">' + match + '</a>');
+          });
+        }
+      }
+
+      return textWithLinks;
+    },
+
+    // Base code from https://github.com/padolsey/prettyprint.js. Modified to fit Mirador needs
+    stringifyObject: function(obj, nestingMargin) {
+      var type = typeof obj,
+          _this = this,
+          str,
+          first = true,
+          increment = 15,
+          delimiter = '<br/>';
+
+      if (obj instanceof RegExp) {
+        return '/' + obj.source + '/';
+      }
+
+      if (typeof nestingMargin === 'undefined') {
+        nestingMargin = 0;
+      }
+
+      if (obj instanceof Array) {
+        str = '[ ';
+        jQuery.each(obj, function (i, item) {
+          str += (i === 0 ? '' : ', ') + _this.stringifyObject(item, nestingMargin + increment);
+        });
+        return str + ' ]';
+      }
+
+      if (typeof obj === 'object') {
+        str = '<div style="margin-left:' +  nestingMargin + 'px">';
+        for (var i in obj) {
+          if (obj.hasOwnProperty(i)) {
+            str += (first ? '' : delimiter) + i + ': ' + _this.stringifyObject(obj[i], nestingMargin + increment);
+            first = false;
+          }
+        }
+
+        return str + '</div>';
+      }
+      return obj.toString();
+    },
+
     template: Handlebars.compile([
-                                 '<div class="image-view">',
-                                 '</div>'
+     '<div class="image-view">',
+     '</div>'
     ].join('')),
 
     listenForActions: function() {
@@ -200,6 +316,17 @@
           _this.hud.manipulationState.displayOn(this);
         } else {
           _this.hud.manipulationState.displayOff(this);
+        }
+      });
+
+      this.element.find('.mirador-canvas-metadata-toggle').on('click', function() {
+        if (_this.hud.canvasInfoState.current === 'none') {
+          _this.hud.canvasInfoState.startup(this);
+        }
+        if (_this.hud.canvasInfoState.current === 'canvasInfoOff') {
+          _this.hud.canvasInfoState.displayOn(this);
+        } else {
+          _this.hud.canvasInfoState.displayOff(this);
         }
       });
 
@@ -671,12 +798,48 @@
       });
     },
 
+    updateCanvasInfo: function(currentImg) {
+      var _this = this;
+      // Handle canvas metadata (temporary patch)
+      _this.tplData = {};
+      this.metadataTypes = {};
+      this.metadataTypes.canvasInfo = _this.getMetadataDetails(currentImg);
+      
+      //vvvvv This is *not* how this should be done.
+      jQuery.each(this.metadataTypes, function(metadataKey, metadataValue) {
+        _this.tplData[metadataKey] = [];
+        
+        jQuery.each(metadataValue, function(key, value) {
+          if (typeof value === 'object') {
+            value = _this.stringifyObject(value);
+          }
+
+          if (typeof value === 'string' && value !== '') {
+
+            _this.tplData[metadataKey].push({
+              label: _this.extractLabelFromAttribute(key),
+              //value: (metadataKey === 'links') ? value : _this.addLinksToUris(value)
+              value: (metadataKey === 'links') ? value : value
+            });
+          }
+        });
+      });
+      
+      _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child(1) .metadata-value').text( _this.tplData.canvasInfo[0].value );
+      _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child(2) .metadata-value').text( _this.tplData.canvasInfo[1].value );
+      _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child(3) .metadata-value a').text( _this.tplData.canvasInfo[2].value );
+      _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child(3) .metadata-value a').attr( "href", _this.tplData.canvasInfo[2].value );
+    },
+
     updateImage: function(canvasID) {
       var _this = this;
       if (this.canvasID !== canvasID) {
         this.canvasID = canvasID;
         this.currentImgIndex = $.getImageIndexById(this.imagesList, canvasID);
         this.currentImg = this.imagesList[this.currentImgIndex];
+
+        _this.updateCanvasInfo(this.currentImg);
+
         this.osdOptions = {
           osdBounds:        null,
           zoomLevel:        null

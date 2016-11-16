@@ -77,6 +77,15 @@
         this.manipulationElement.hide();
       }
 
+      if (this.canvasControls.canvasInfo.canvasInfoLayer) {
+        console.log(this.canvasInfoTplData);
+        this.canvasInfoElement = jQuery(this.canvasInfoTemplate(
+          this.canvasInfoTplData
+        )).appendTo(this.container.find('.mirador-canvas-metadata-controls'));
+        //this.setQtips(this.container.find('.mirador-canvas-metadata-controls'));
+        this.canvasInfoElement.hide();
+      }
+
       this.bindEvents();
     },
 
@@ -223,6 +232,14 @@
       this.manipulationElement.fadeOut("150");
     },
 
+    canvasInfoShow: function() {
+      this.canvasInfoElement.fadeIn("150");
+    },
+
+    canvasInfoHide: function() {
+      this.canvasInfoElement.fadeOut("150");
+    },
+
     bindEvents: function() {
       var _this = this;
       // for some reason using :not selector isn't working for mouseenter/mouseleave,
@@ -336,6 +353,14 @@
                                    '<i class="fa fa-lg fa-refresh"></i>',
                                    '</a>',
       '{{/if}}',
+    ].join('')),
+
+    canvasInfoTemplate: Handlebars.compile([
+      '<div class="mirador-canvas-metadata">',
+        '{{#each canvasInfo}}',
+          '<div class="metadata-item"><div class="metadata-label">{{label}}:</div><div class="metadata-value">{{{value}}}</div></div>',
+        '{{/each}}',
+      '</div>'
     ].join('')),
 
     // for accessibility, make sure to add aria-labels just like above

@@ -19,15 +19,18 @@
       this.createStateMachines();
 
       var showAnno = typeof this.showAnno !== 'undefined' ? this.showAnno : this.canvasControls.annotations.annotationLayer,
-      showImageControls = typeof this.showImageControls !== 'undefined' ? this.showImageControls : this.canvasControls.imageManipulation.manipulationLayer;
+      showImageControls = typeof this.showImageControls !== 'undefined' ? this.showImageControls : this.canvasControls.imageManipulation.manipulationLayer,
+      showCanvasInfoControls = typeof this.showCanvasInfoControls !== 'undefined' ? this.showCanvasInfoControls : this.canvasControls.canvasInfo.canvasInfoLayer;
+
       this.element = jQuery(this.template({
         showNextPrev : this.showNextPrev,
         showBottomPanel : typeof this.bottomPanelAvailable === 'undefined' ? true : this.bottomPanelAvailable,
         showAnno : showAnno,
-        showImageControls : showImageControls
+        showImageControls : showImageControls,
+        showCanvasInfoControls: showCanvasInfoControls
       })).appendTo(this.appendTo);
 
-      if (showAnno || showImageControls) {
+      if (showAnno || showImageControls || showCanvasInfoControls) {
         this.contextControls = new $.ContextControls({
           element: null,
           container: this.element.find('.mirador-osd-context-controls'),
@@ -39,7 +42,8 @@
           availableAnnotationTools: this.availableAnnotationTools,
           availableAnnotationStylePickers: this.availableAnnotationStylePickers,
           state: this.state,
-          eventEmitter: this.eventEmitter
+          eventEmitter: this.eventEmitter,
+          canvasInfoTplData: this.canvasInfoTplData
         });
       }
 
@@ -204,6 +208,38 @@
           }
         }
       });
+
+      this.canvasInfoState = StateMachine.create({
+        events: [
+          { name: 'startup',  from: 'none',  to: 'canvasInfoOff' },
+          { name: 'displayOn',  from: 'canvasInfoOff',  to: 'canvasInfoOn' },
+          { name: 'displayOff', from: 'canvasInfoOn', to: 'canvasInfoOff' }
+        ],
+        callbacks: {
+          onstartup: function(event, from, to) {
+            _this.eventEmitter.publish(('windowUpdated'), {
+              id: _this.windowId,
+              canvasInfoState: to
+            });
+          },
+          ondisplayOn: function(event, from, to) {
+            _this.eventEmitter.publish('HUD_ADD_CLASS.'+_this.windowId, ['.mirador-canvas-metadata-toggle', 'selected']);
+            _this.contextControls.canvasInfoShow();
+            _this.eventEmitter.publish(('windowUpdated'), {
+              id: _this.windowId,
+              canvasInfoState: to
+            });
+          },
+          ondisplayOff: function(event, from, to) {
+            _this.contextControls.canvasInfoHide();
+            _this.eventEmitter.publish('HUD_REMOVE_CLASS.'+_this.windowId, ['.mirador-canvas-metadata-toggle', 'selected']);
+            _this.eventEmitter.publish(('windowUpdated'), {
+              id: _this.windowId,
+              canvasInfoState: to
+            });
+          }
+        }
+      });
     },
 
     template: Handlebars.compile([
@@ -225,6 +261,13 @@
                                   '<div class="mirador-manipulation-controls">',
                                   '<a class="mirador-manipulation-toggle hud-control" role="button" title="{{t "imageManipulationTooltip"}}" aria-label="{{t "imageManipulationTooltip"}}">',
                                   '<i class="material-icons">tune</i>',
+                                  '</a>',
+                                  '</div>',
+                                 '{{/if}}',
+                                 '{{#if showCanvasInfoControls}}',
+                                  '<div class="mirador-canvas-metadata-controls">',
+                                  '<a class="mirador-canvas-metadata-toggle hud-control" role="button" title="Canvas metadata" aria-label="Canvas metadata">',
+                                  '<i class="material-icons">info</i>',
                                   '</a>',
                                   '</div>',
                                  '{{/if}}',
