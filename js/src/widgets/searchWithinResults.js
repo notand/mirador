@@ -88,9 +88,19 @@ $.SearchWithinResults.prototype = {
 
 
   displayResultCounts: function(searchResults){
-    var total = searchResults.within.total,
-    startResultNumber = searchResults.startIndex + 1,
-    endResultNumber = "";
+    //console.log(searchResults);
+    var total,
+    startResultNumber,
+    endResultNumber;
+
+    if (searchResults.within) {
+      total = searchResults.within.total;
+    }
+
+    if (searchResults.startIndex) {
+      startResultNumber = searchResults.startIndex + 1,
+      endResultNumber = "";
+    }
 
     //if there is only only resource, it will not be array and therefore we can't
     //take the length of it; this conditions check first to see if the resources
@@ -100,14 +110,18 @@ $.SearchWithinResults.prototype = {
     // Pages with only one result do not display properly. See for example:
     // http://exist.scta.info/exist/apps/scta/iiif/pl-zbsSII72/search?q=fides&page=3
 
-    if (searchResults.resources.constructor === Array) {
-      endResultNumber = searchResults.startIndex + searchResults.resources.length;
-    }
-    else {
-      endResultNumber = searchResults.startIndex + 1;
+    if (startResultNumber) {
+      if (searchResults.resources.constructor === Array) {
+        endResultNumber = searchResults.startIndex + searchResults.resources.length;
+      }
+      else {
+        endResultNumber = searchResults.startIndex + 1;
+      }
     }
 
-    jQuery('.search-results-count').html("<hr/><p>Showing " + startResultNumber + " - " + endResultNumber + " out of " + total + "</p><hr/>");
+    if (total) {
+      jQuery('.search-results-count').html("<hr/><p>Showing " + startResultNumber + " - " + endResultNumber + " out of " + total + "</p><hr/>");
+    }
   },
 
   processResults: function(searchResults) {
@@ -242,18 +256,21 @@ $.SearchWithinResults.prototype = {
     // Split ID from Coordinates if necessary
     var id_parts = _this.splitBaseUrlAndCoordinates(canvasid);
 
+    //console.log(annotation.resource[0].chars);
+
     return {
       canvasid: id_parts.base,
       coordinates: id_parts.coords,
       canvaslabel: canvaslabel,
-      resulttext: annotation.resource.chars
+      //resulttext: annotation.resource.chars
+      resulttext: annotation.resource[0].chars
     };
-
 
   },
   getSearchAnnotations: function(searchResults) {
     var _this = this;
     tplData = [];
+
     //add condition here to make sure searchResults.resources is not null
     if (searchResults.resources !== null) {
       //This conditional handles if the results come back as a single object or as an array
