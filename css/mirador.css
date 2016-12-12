@@ -522,6 +522,7 @@ li.highlight {
   overflow-y: scroll;
   margin-top: 10px;
   border-top: 1px solid gray;
+  position:relative;
 }
 
 /* main-menu workspaces-panel */
@@ -650,6 +651,10 @@ li.highlight {
 }
 .slot.draggedOver .addItemText, .slot.draggedOver .plus span {
   display:none;
+}
+.draggedOver .select-results .dropMask {
+  transition: background-color 0.3s ease-in-out;
+  background-color: rgba(255,255,255,.5);
 }
 .addItemLink {
   display:block;

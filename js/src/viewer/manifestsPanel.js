@@ -58,7 +58,29 @@
         },
 
         bindEvents: function() {
-            var _this = this;
+            var _this = this,
+                dropTarget = this.element.find('.dropMask');
+
+            // DnD tests
+            this.element.on('dragover', function(e) {
+              e.preventDefault();
+              dropTarget.show();
+            });
+            dropTarget.on('dragenter', function(e) {
+              e.preventDefault();
+              _this.element.addClass('draggedOver');
+            });
+            dropTarget.on('dragleave', function(e) {
+              e.preventDefault();
+              _this.element.removeClass('draggedOver');
+              dropTarget.hide();
+            });
+            this.element.on('drop', function(e) {
+              _this.element.removeClass('draggedOver');
+              dropTarget.hide();
+              _this.dropItem(e);
+            });
+            // end DnD tests
 
             // handle interface events
             this.element.find('form#url-load-form').on('submit', function(event) {
@@ -83,6 +105,114 @@
               _this.resizePanel();
             }, 50, true));
         },
+
+        // DnD tests
+        dropItem: function(e) {
+          var _this = this;
+
+          e.preventDefault();
+          var text_url = e.originalEvent.dataTransfer.getData("text/plain");
+          if (text_url) {
+            _this.handleDrop(text_url);
+          } else {
+            e.originalEvent.dataTransfer.items[0].getAsString(function(url) {
+              _this.handleDrop(url);
+            });
+          }
+        },
+
+        handleDrop: function(url) {
+          var _this = this;
+
+          url = url || text_url;
+          var manifestUrl = $.getQueryParams(url).manifest || url,
+              collectionUrl = $.getQueryParams(url).collection,
+              canvasId = $.getQueryParams(url).canvas,
+              imageInfoUrl = $.getQueryParams(url).image,
+              windowConfig;
+
+          if (typeof _this.state.getStateProperty('manifests')[manifestUrl] !== 'undefined') {
+            windowConfig = {
+              manifest: _this.state.getStateProperty('manifests')[manifestUrl]
+            };
+
+            if (canvasId) {
+              // If the canvasID is defined, we need to both add
+              // it to the windowConfig and tell it to open in
+              // image view. If we don't specify the focus, the
+              // window will open in thumbnail view with the
+              // chosen page highlighted.
+              windowConfig.canvasID = canvasId;
+              windowConfig.viewType = 'ImageView';
+              _this.eventEmitter.publish('ADD_WINDOW', windowConfig);
+            }
+
+            _this.eventEmitter.publish('ADD_MANIFEST_FROM_URL', manifestUrl, "(Added by drag and drop)");
+
+          }
+          
+          else if (typeof imageInfoUrl !== 'undefined') {
+            if (!_this.state.getStateProperty('manifests')[imageInfoUrl]) {
+              _this.eventEmitter.publish('ADD_MANIFEST_FROM_URL', imageInfoUrl, "(Added from URL)");
+            }
+          } 
+          else if (typeof collectionUrl !== 'undefined'){
+            jQuery.getJSON(collectionUrl).done(function (data, status, jqXHR) {
+              if (data.hasOwnProperty('manifests')){
+                jQuery.each(data.manifests, function (ci, mfst) {
+                  if (!_this.state.getStateProperty('manifests')[imageInfoUrl]) {
+                    _this.eventEmitter.publish('ADD_MANIFEST_FROM_URL', mfst['@id'], "(Added from URL)");
+                  }
+                });
+              }
+            });
+
+            //TODO: 
+            //this works;
+            //but you might want to check if some "publish" action would be better
+            _this.addItem();
+            
+          }
+          else {
+            if (!_this.state.getStateProperty('manifests')[imageInfoUrl]) {
+              _this.eventEmitter.publish('ADD_MANIFEST_FROM_URL', manifestUrl, "(Added from URL)");
+            }
+          }
+
+          _this.eventEmitter.subscribe('manifestReceived', function(event, manifest) {
+            var windowConfig;
+            if (manifest.jsonLd['@id'] === manifestUrl || manifest.jsonLd['@id']+'/info.json' === imageInfoUrl) {
+              // There are many manifests that may be received
+              // while we are waiting for this one, so we
+              // need to make sure the event actually refers to the
+              // manifest we've just dropped.
+
+              windowConfig = {
+                manifest: manifest
+              };
+
+              if (manifest.jsonLd['@id']+'/info.json' === imageInfoUrl) {
+                // If this was added from a naked info.json, pick the
+                // first (and only) page from the synthetic manifest.
+                canvasId = manifest.jsonLd.sequences[0].canvases[0]['@id'];
+              }
+
+              if (canvasId) {
+                // If the canvasID is defined, we need to both add
+                // it to the windowConfig and tell it to open in
+                // image view. If we don't specify the focus, the
+                // window will open in thumbnail view with the
+                // chosen page highlighted.
+                windowConfig.canvasID = canvasId;
+                windowConfig.viewType = 'ImageView';
+                _this.eventEmitter.publish('ADD_WINDOW', windowConfig);
+              }
+
+              _this.eventEmitter.publish('ADD_MANIFEST_FROM_URL', manifest.jsonLd['@id'], "(Added by drag and drop)");
+            }
+          });
+        },
+        // end DnD tests
         
         hide: function() {
             var _this = this;
@@ -162,6 +292,7 @@
               '<div class="select-results">',
                 '<ul class="items-listing">',
                 '</ul>',
+                '<a class="dropMask"></a>',
               '</div>',
           '</div>',
           '</div>'
