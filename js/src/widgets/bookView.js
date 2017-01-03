@@ -21,7 +21,8 @@
         zoomLevel:        null
       },
       stitchTileMargin: 10,
-      eventEmitter: null
+      eventEmitter: null,
+      request: null
     }, options);
 
     this.init();
@@ -279,7 +280,41 @@ bindEvents: function() {
         var imageUrl = $.Iiif.getImageUrl(image),
         infoJsonUrl = imageUrl + '/info.json';
 
-        jQuery.getJSON(infoJsonUrl).done(function (data, status, jqXHR) {
+        if ( $.DEFAULT_SETTINGS.httpProxyUrl !== '' && !$.isHttps(infoJsonUrl) ) {
+          jQuery.ajaxPrefilter(function(options, originalOptions, jqXHR) {
+
+            if (!options.headers) {
+              return;
+            }
+
+            if ( options.crossDomain ) {
+              // Set the proxy URL
+              options.headers['X-Proxy-URL'] = options.url;
+              options.url = $.DEFAULT_SETTINGS.httpProxyUrl;
+              options.crossDomain = false;
+            }
+          });
+
+          this.request = jQuery.ajax({
+            url: infoJsonUrl,
+            dataType: 'json',
+            async: true,
+            headers: {
+              "X-Proxy-URL": infoJsonUrl
+            },
+            crossDomain: true, // set this to ensure our $.ajaxPrefilter hook fires
+            processData: false // we want this to remain an object for $.ajaxPrefilter
+          });
+        } else {
+          this.request = jQuery.ajax({
+            url: infoJsonUrl,
+            dataType: 'json',
+            async: true
+          });
+        }
+
+        //jQuery.getJSON(infoJsonUrl).done(function (data, status, jqXHR) {
+        this.request.done(function (data, status, jqXHR) {
           tileSources.splice(index, 0, data);
           if (tileSources.length === _this.stitchList.length ) { dfd.resolve(); }
         });

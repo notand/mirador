@@ -1,5 +1,14 @@
 (function($) {
 
+  $.isHttps = function(uri) {
+    var protocol = uri.split("/")[0];
+    if ( protocol == 'https:' ) {
+      return true;
+    } else if ( protocol == 'http:' ) {
+      return false;
+    }
+  };
+
   $.trimString = function(str) {
     return str.replace(/^\s+|\s+$/g, '');
   };

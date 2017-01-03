@@ -5,6 +5,8 @@
    */
   $.DEFAULT_SETTINGS = {
 
+    'httpProxyUrl': 'https://localhost/tests/php-cross-domain-proxy/proxy.php',
+
     'workspaceType': 'singleObject',
 
     'saveSession' : false,  //whether or not to store session to local storage

@@ -50,11 +50,39 @@
   $.Manifest.prototype = {
     init: function(manifestUri) {
       var _this = this;
-      this.request = jQuery.ajax({
-        url: manifestUri,
-        dataType: 'json',
-        async: true
-      });
+
+      if ( $.DEFAULT_SETTINGS.httpProxyUrl !== '' && !$.isHttps(manifestUri) ) {
+
+        jQuery.ajaxPrefilter(function(options, originalOptions, jqXHR) {
+          if (!options.headers) {
+            return;
+          }
+          if ( options.crossDomain ) {
+            options.headers['X-Proxy-URL'] = options.url;
+            options.url = $.DEFAULT_SETTINGS.httpProxyUrl;
+            options.crossDomain = false;
+          }
+        });
+
+        this.request = jQuery.ajax({
+          url: manifestUri,
+          dataType: 'json',
+          async: true,
+          headers: {
+            "X-Proxy-URL": manifestUri
+          },
+          crossDomain: true, // ensure $.ajaxPrefilter hook fires
+          processData: false
+        });
+
+      } else {
+
+        this.request = jQuery.ajax({
+          url: manifestUri,
+          dataType: 'json',
+          async: true
+        });
+      }
 
       this.request.done(function(jsonLd) {
         _this.jsonLd = jsonLd;
