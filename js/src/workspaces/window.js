@@ -470,7 +470,6 @@
               thumbInfo: {thumbsHeight: 80, listingCssCls: 'panel-listing-thumbs', thumbnailCls: 'panel-thumbnail-view'}
             });
           }
-
           //refresh displayed in case TableOfContents module changed it
           displayed = _this.focusOverlaysAvailable[state][panelType][view];
 
