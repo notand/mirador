@@ -78,7 +78,6 @@
       }
 
       if (this.canvasControls.canvasInfo.canvasInfoLayer) {
-        console.log(this.canvasInfoTplData);
         this.canvasInfoElement = jQuery(this.canvasInfoTemplate(
           this.canvasInfoTplData
         )).appendTo(this.container.find('.mirador-canvas-metadata-controls'));
