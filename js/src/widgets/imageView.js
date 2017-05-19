@@ -286,16 +286,74 @@
       //Annotation specific controls
 
       //Image manipulation controls
-      //set the original values for all of the CSS filter options
-      var filterValues = {
-        "brightness" : "brightness(100%)",
-        "contrast" : "contrast(100%)",
-        "saturate" : "saturate(100%)",
-        "grayscale" : "grayscale(0%)",
-        "invert" : "invert(0%)"
-      };
+      var filterValues = {};
 
-      function setFilterCSS() {
+      _this.eventEmitter.subscribe('osdOpen.'+_this.windowId, function(event) {
+        var windowObjects = _this.state.getStateProperty('windowObjects');
+        if (windowObjects && windowObjects.length > 0) {
+          jQuery.each(windowObjects, function(index, window){
+            if ( window.hasOwnProperty('windowOptions') ) {
+              if ( window.windowOptions.imageFilters && _this.windowId === window.id ) {
+
+                //get existing filter values from state
+                newfilterValues = getFilterValuesFromState( filterValues, window.windowOptions.imageFilters );
+                //and apply all the CSS filter options to the current image
+                setFilterCSS(newfilterValues);
+
+                //display image manipulation toolbar at startup
+                if (_this.hud.manipulationState.current === 'none') {
+                  _this.hud.manipulationState.startup();
+                  _this.hud.manipulationState.displayOn();
+                } else if (_this.hud.manipulationState.current === 'manipulationOn') {
+                  _this.hud.manipulationState.displayOff();
+                }
+                
+                //set init state of image manipulation controls (toggle buttons and sliders)
+                initImageControls(window.windowOptions.imageFilters);
+              }
+            }
+          });
+        }
+        //set default values for all of the CSS filter options
+        else {
+          filterValues = {
+            "brightness" : "brightness(100%)",
+            "contrast" : "contrast(100%)",
+            "saturate" : "saturate(100%)",
+            "grayscale" : "grayscale(0%)",
+            "invert" : "invert(0%)"
+          };
+        }
+      });
+
+      function initImageControls( imageFilters ) {
+        jQuery.each( imageFilters, function( key, value ) {
+          //toggle buttons
+          var toggles = ['grayscale', 'invert'];
+          if ( toggles.indexOf(key) !== -1 && getPercentValue(value) !== 0 ) {
+            _this.element.find('.mirador-osd-' + key).addClass('selected');
+          }
+          //sliders
+          var sliders = ['brightness', 'contrast', 'saturate'];
+          var sliderValue = getPercentValue(value);
+          if ( sliders.indexOf(key) !== -1 && getPercentValue(value) !== 100 ) {
+            _this.element.find('.mirador-osd-' + key).addClass('selected');
+            _this.element.find('.mirador-osd-'+ key +'-slider').slider('option','value',sliderValue);
+            _this.element.find('.mirador-osd-'+ key +'-slider').find('.percent').text(sliderValue + '%');
+          }
+        });
+      }
+
+      function getFilterValuesFromState( filterValues, imageFilters ) {
+        jQuery.each( imageFilters, function( key, value ) {
+          if ( typeof value !== 'undefined' ) {
+            filterValues[key] = value;
+          }
+        });
+        return filterValues;
+      }
+
+      function setFilterCSS(filterValues) {
         var filterCSS = jQuery.map(filterValues, function(value, key) { return value; }).join(" "),
         osdCanvas = jQuery(_this.osd.drawer.canvas);
         osdCanvas.css({
@@ -305,9 +363,20 @@
           '-o-filter'      : filterCSS,
           '-ms-filter'     : filterCSS
         });
+
+        _this.eventEmitter.publish("imageFiltersUpdated", {
+          id: _this.windowId,
+          imageFilters: filterValues
+        });
       }
 
-      function resetImageManipulationControls() {
+      function getPercentValue( str ) {
+        var regex = /[0-9]{1,3}/;
+        var percent = str.match(regex);
+        return Number(percent[0]);
+      }
+
+      function resetImageManipulationControls( filterValues ) {
         //reset rotation
         if (_this.osd) {
           _this.osd.viewport.setRotation(0);
@@ -317,16 +386,19 @@
         filterValues.brightness = "brightness(100%)";
         _this.element.find('.mirador-osd-brightness-slider').slider('option','value',100);
         _this.element.find('.mirador-osd-brightness-slider').find('.percent').text(100 + '%');
+        _this.element.find('.mirador-osd-brightness').removeClass('selected');
 
         //reset contrast
         filterValues.contrast = "contrast(100%)";
         _this.element.find('.mirador-osd-contrast-slider').slider('option','value',100);
         _this.element.find('.mirador-osd-contrast-slider').find('.percent').text(100 + '%');
+        _this.element.find('.mirador-osd-contrast').removeClass('selected');
 
         //reset saturation
         filterValues.saturate = "saturate(100%)";
-        _this.element.find('.mirador-osd-saturation-slider').slider('option','value',100);
-        _this.element.find('.mirador-osd-saturation-slider').find('.percent').text(100 + '%');
+        _this.element.find('.mirador-osd-saturate-slider').slider('option','value',100);
+        _this.element.find('.mirador-osd-saturate-slider').find('.percent').text(100 + '%');
+        _this.element.find('.mirador-osd-saturate').removeClass('selected');
 
         //reset grayscale
         filterValues.grayscale = "grayscale(0%)";
@@ -340,7 +412,7 @@
         jQuery(_this.osd.canvas).removeClass('mirador-mirror');
         _this.osd.viewport.viewer.innerTracker.dragHandler = _this.originalDragHandler;
 
-        setFilterCSS();
+        setFilterCSS(filterValues);
       }
 
       this.element.find('.mirador-osd-rotate-right').on('click', function() {
@@ -371,7 +443,7 @@
         },
         slide: function(event, ui) {
           filterValues.brightness = "brightness("+ui.value+"%)";
-          setFilterCSS();
+          setFilterCSS(filterValues);
           jQuery(this).find('.percent').text(ui.value + '%');
         }
       }).hide();
@@ -398,7 +470,7 @@
         },
         slide: function(event, ui) {
           filterValues.contrast = "contrast("+ui.value+"%)";
-          setFilterCSS();
+          setFilterCSS(filterValues);
           jQuery(this).find('.percent').text(ui.value + '%');
         }
       }).hide();
@@ -411,7 +483,7 @@
           _this.element.find('.mirador-osd-contrast-slider').stop(true, true).hide();
       });
 
-      this.element.find('.mirador-osd-saturation-slider').slider({
+      this.element.find('.mirador-osd-saturate-slider').slider({
         orientation: "vertical",
         range: "min",
         min: 0,
@@ -425,17 +497,17 @@
         },
         slide: function(event, ui) {
           filterValues.saturate = "saturate("+ui.value+"%)";
-          setFilterCSS();
+          setFilterCSS(filterValues);
           jQuery(this).find('.percent').text(ui.value + '%');
         }
       }).hide();
 
-      this.element.find('.mirador-osd-saturation').on('mouseenter',
+      this.element.find('.mirador-osd-saturate').on('mouseenter',
         function() {
-          _this.element.find('.mirador-osd-saturation-slider').stop(true, true).show();
+          _this.element.find('.mirador-osd-saturate-slider').stop(true, true).show();
         }).on('mouseleave',
         function() {
-          _this.element.find('.mirador-osd-saturation-slider').stop(true, true).hide();
+          _this.element.find('.mirador-osd-saturate-slider').stop(true, true).hide();
       });
 
       this.element.find('.mirador-osd-grayscale').on('click', function() {
@@ -446,7 +518,7 @@
           filterValues.grayscale = "grayscale(100%)";
           jQuery(this).addClass('selected');
         }
-        setFilterCSS();
+        setFilterCSS(filterValues);
       });
 
       this.element.find('.mirador-osd-invert').on('click', function() {
@@ -457,7 +529,7 @@
           filterValues.invert = "invert(100%)";
           jQuery(this).addClass('selected');
         }
-        setFilterCSS();
+        setFilterCSS(filterValues);
       });
 
       this.element.find('.mirador-osd-mirror').on('click', function() {
@@ -488,11 +560,11 @@
     });
 
       this.element.find('.mirador-osd-reset').on('click', function() {
-        resetImageManipulationControls();
+        resetImageManipulationControls(filterValues);
       });
 
       this.eventEmitter.subscribe('resetImageManipulationControls.'+this.windowId, function() {
-        resetImageManipulationControls();
+        resetImageManipulationControls(filterValues);
       });
       //Image manipulation controls
     },
