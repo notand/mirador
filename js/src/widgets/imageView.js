@@ -824,11 +824,21 @@
           }
         });
       });
-      
-      _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child(1) .metadata-value').text( _this.tplData.canvasInfo[0].value );
-      _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child(2) .metadata-value').text( _this.tplData.canvasInfo[1].value );
-      _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child(3) .metadata-value a').text( _this.tplData.canvasInfo[2].value );
-      _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child(3) .metadata-value a').attr( "href", _this.tplData.canvasInfo[2].value );
+
+      jQuery.each(_this.tplData.canvasInfo, function(index, value) {
+        var i = index + 1;
+
+        var link = _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child('+i+') .metadata-value a');
+
+        if ( link.length ) {
+          link.text( value.value );
+          link.attr( "href", value.value );
+        } else {
+          _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child('+i+') .metadata-label').text( value.label );
+          _this.element.find('.mirador-canvas-metadata').find('.metadata-item:nth-child('+i+') .metadata-value').text( value.value );
+        }
+
+      });
     },
 
     updateImage: function(canvasID) {
